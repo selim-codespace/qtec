@@ -14,3 +14,4 @@ Creating turbopack project {
 }
 ✓ Ready in 813ms
  GET / 200 in 3.6s (compile: 646ms, render: 3.0s)
+[?25h
