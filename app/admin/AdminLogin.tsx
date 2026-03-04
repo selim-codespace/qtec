@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 export function AdminLogin() {
-    const [password, setPassword] = useState("");
+    const [password, setPassword] = useState("admin_qtech");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -54,7 +54,7 @@ export function AdminLogin() {
                         <Input
                             type="password"
                             placeholder="Password"
-                            value={password}
+                            value={"admin_qtech" || password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
