@@ -30,7 +30,7 @@ export function AdminLogin() {
             } else {
                 setError(data.error || "Invalid password");
             }
-        } catch (err) {
+        } catch {
             setError("Failed to connect to server");
         } finally {
             setLoading(false);

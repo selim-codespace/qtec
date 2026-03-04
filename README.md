@@ -1,45 +1,86 @@
-# QuickHire - Job Board Application
+# QTech Job Board
 
-A robust, full-stack mini job board application built with Next.js App Router and Prisma. This project fulfills the QTech backend assignment requirements, combining an aesthetic matching the provided Figma design with a full RESTful API and SQLite datastore.
+Full-stack job board built with Next.js App Router, Tailwind CSS, REST API routes, and Prisma (PostgreSQL).
 
 ## Tech Stack
-- **Framework:** Next.js (App Router, React 19)
-- **Database:** SQLite
-- **ORM:** Prisma
-- **Styling:** Tailwind CSS V4
-- **Validation:** Zod
-- **Icons:** Lucide-React
+- Next.js 16 (React 19)
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL
+- Zod validation
 
-## Features Implemented
-- **Landing Page:** Identical to the Figma mockup containing Search Bar, Category grid, CTA banners, featured job feeds, and partner lists.
-- **Job Listings (Frontend):** `/jobs` UI list with sidebar category and job type filtering driven securely via URL searchParams.
-- **Job Details & Application View:** Read a full description and submit candidacies via a reactive slide-in Modal form featuring front and backend Zod validation.
-- **Admin Panel:** Password-protected dashboard to post new jobs and manage submitted candidate applications securely.
-- **RESTful API:** Clean backend JSON logic hosted within `app/api/...` endpoint files.
+## Features
+- Job listings page with:
+  - Search by keyword
+  - Filter by category
+  - Filter by location
+  - Responsive layout
+- Job detail page with:
+  - Full job description
+  - Apply form (name, email, resume URL, cover note)
+- Admin view:
+  - Login with password
+  - Add jobs
+  - Delete jobs
+  - View submitted applications per job
+- REST API:
+  - `GET /api/jobs`
+  - `GET /api/jobs/{id}`
+  - `POST /api/jobs` (admin)
+  - `DELETE /api/jobs/{id}` (admin)
+  - `POST /api/applications`
+- Validation:
+  - Required fields
+  - Email format
+  - Resume link URL format
 
-## Local Setup Instructions
+## Database Models
+- `Job`
+  - `id, title, company, location, category, type, description, salary, companyLogo, createdAt`
+- `Application`
+  - `id, jobId, name, email, resumeLink, coverNote, createdAt`
+- Relationship:
+  - `Job` has many `Application`
+  - `Application` belongs to `Job`
 
-1. **Install dependencies:**
-   ```bash
-   pnpm install
-   ```
-2. **Setup the Database:**
-   Generate the SQLite instance and apply the schema:
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-3. **Seed the generic Jobs table:**
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-4. **Environment File:**
-   Ensure a `.env` is present containing the `DATABASE_URL` flag and `ADMIN_PASSWORD`. Check `.env.example`.
-5. **Run Development Server:**
-   ```bash
-   pnpm dev
-   ```
+## Setup
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Create environment file:
+```bash
+cp .env.example .env
+```
+On Windows PowerShell:
+```powershell
+Copy-Item .env.example .env
+```
+
+3. Configure your PostgreSQL `DATABASE_URL` in `.env`:
+- Supabase: use the connection string from Project Settings > Database.
+- Local PostgreSQL: example `postgresql://postgres:postgres@localhost:5432/qtech?schema=public`
+
+4. Generate Prisma client and push schema:
+```bash
+npm exec prisma generate
+npm exec prisma db push
+```
+
+5. Seed sample jobs:
+```bash
+npm run db:seed
+```
+
+6. Run dev server:
+- `npm run dev`
 
 ## Admin Access
-- Path: `/admin`
-- Password: `admin_qtech` (as set in `.env`)
+- URL: `/admin`
+- Password: value from `ADMIN_PASSWORD` in `.env`
+
+## Notes
+- `POST /api/jobs` and `DELETE /api/jobs/{id}` require admin authentication cookie.
+- API responses follow `{ success, data }` for successful calls and `{ success, error }` for failures.
+- `pgAdmin` is optional. It is only a GUI client; the app works without it.

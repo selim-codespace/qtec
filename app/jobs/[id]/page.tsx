@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensureDbInitialized } from "@/lib/db-init";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { MapPin, Briefcase, DollarSign, Calendar } from "lucide-react";
@@ -16,6 +17,7 @@ export default async function JobDetailPage({
 
     let job = null;
     try {
+        await ensureDbInitialized();
         job = await db.job.findUnique({
             where: { id },
         });
@@ -26,9 +28,6 @@ export default async function JobDetailPage({
     if (!job) {
         notFound();
     }
-
-    // Handle line breaks in description
-    const descriptionHtml = job.description.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>');
 
     return (
         <div className="bg-[#F8F8FD] min-h-screen py-10 px-4 md:px-6">
@@ -69,7 +68,7 @@ export default async function JobDetailPage({
                         {/* Main Content */}
                         <div className="lg:w-2/3">
                             <h2 className="text-xl font-bold mb-6">Job Description</h2>
-                            <div className="prose max-w-none text-muted leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+                            <p className="text-muted leading-relaxed whitespace-pre-line">{job.description}</p>
 
                             <hr className="my-10 border-border" />
 

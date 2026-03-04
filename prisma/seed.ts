@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-    // Clear existing
     await prisma.application.deleteMany()
     await prisma.job.deleteMany()
 
@@ -14,7 +13,8 @@ async function main() {
             location: 'Madrid, Spain',
             category: 'Marketing',
             type: 'Full Time',
-            description: 'Revolut is looking for Email Marketing to help team design ... \n\nWe are looking for an experienced email marketing manager to guide our automation processes and ensure high engagement.',
+            description:
+                'Revolut is looking for Email Marketing to help team design ... \n\nWe are looking for an experienced email marketing manager to guide our automation processes and ensure high engagement.',
             salary: '$50k - $70k',
         },
         {
@@ -23,7 +23,8 @@ async function main() {
             location: 'San Francisco, US',
             category: 'Design',
             type: 'Full Time',
-            description: 'Dropbox is looking for Brand Designer to help the team... \n\nJoin our design team to craft beautiful and intuitive experiences for millions of users.',
+            description:
+                'Dropbox is looking for Brand Designer to help the team... \n\nJoin our design team to craft beautiful and intuitive experiences for millions of users.',
             salary: '$90k - $120k',
         },
         {
@@ -32,7 +33,8 @@ async function main() {
             location: 'Granada, Spain',
             category: 'Design',
             type: 'Full Time',
-            description: 'Blinklist is looking for Visual Designer to help team design ... \n\nWork on engaging visual concepts and brand identity systems.',
+            description:
+                'Blinklist is looking for Visual Designer to help team design ... \n\nWork on engaging visual concepts and brand identity systems.',
             salary: '$60k - $85k',
         },
         {
@@ -41,8 +43,9 @@ async function main() {
             location: 'Manchester, UK',
             category: 'Design',
             type: 'Full Time',
-            description: 'ClassPass is looking for Product Designer to help us build... \n\nWe need a talented designer to create user flows, prototypes, and high-fidelity mockups.',
-            salary: '£55k - £75k',
+            description:
+                'ClassPass is looking for Product Designer to help us build... \n\nWe need a talented designer to create user flows, prototypes, and high-fidelity mockups.',
+            salary: 'GBP 55k - 75k',
         },
         {
             title: 'Interactive Developer',
@@ -50,8 +53,9 @@ async function main() {
             location: 'Hamburg, Germany',
             category: 'Engineering',
             type: 'Full Time',
-            description: 'Terraform is looking for Interactive Developer to help team... \n\nDevelop cutting-edge web experiences using Next.js, WebGL, and modern tools.',
-            salary: '€65k - €90k',
+            description:
+                'Terraform is looking for Interactive Developer to help team... \n\nDevelop cutting-edge web experiences using Next.js, WebGL, and modern tools.',
+            salary: 'EUR 65k - 90k',
         },
         {
             title: 'HR Manager',
@@ -59,7 +63,8 @@ async function main() {
             location: 'Lucern, Switzerland',
             category: 'Human Resource',
             type: 'Full Time',
-            description: 'Packer is looking for HR Manager to help team manage ... \n\nDrive recruitment, employee relations, and HR strategy in a fast-paced environment.',
+            description:
+                'Packer is looking for HR Manager to help team manage ... \n\nDrive recruitment, employee relations, and HR strategy in a fast-paced environment.',
             salary: 'CHF 80k - CHF 110k',
         },
         {
@@ -68,8 +73,9 @@ async function main() {
             location: 'Paris, France',
             category: 'Marketing',
             type: 'Part Time',
-            description: 'Nomad is looking for Social Media Assistant ... \n\nManage community engagement and content posting across Instagram and TikTok.',
-            salary: '€20/hr',
+            description:
+                'Nomad is looking for Social Media Assistant ... \n\nManage community engagement and content posting across Instagram and TikTok.',
+            salary: 'EUR 20/hr',
         },
         {
             title: 'Data Analyst',
@@ -77,27 +83,28 @@ async function main() {
             location: 'San Diego, US',
             category: 'Technology',
             type: 'Full Time',
-            description: 'Twitter is looking for Data Analyst to help team ... \n\nAnalyze massive datasets to uncover trends and drive business decisions.',
+            description:
+                'Twitter is looking for Data Analyst to help team ... \n\nAnalyze massive datasets to uncover trends and drive business decisions.',
             salary: '$110k - $140k',
         }
     ]
 
-    console.log(`Start seeding ...`)
-    for (const j of jobs) {
+    console.log('Start seeding ...')
+    for (const jobData of jobs) {
         const job = await prisma.job.create({
-            data: j,
+            data: jobData,
         })
         console.log(`Created job with id: ${job.id}`)
     }
-    console.log(`Seeding finished.`)
+    console.log('Seeding finished.')
 }
 
 main()
     .then(async () => {
         await prisma.$disconnect()
     })
-    .catch(async (e) => {
-        console.error(e)
+    .catch(async (error) => {
+        console.error(error)
         await prisma.$disconnect()
         process.exit(1)
     })

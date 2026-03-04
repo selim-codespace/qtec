@@ -1,35 +1,74 @@
-import { db } from "@/lib/db";
-import { JobCard } from "@/components/ui/JobCard";
-import { SearchBar } from "@/components/ui/SearchBar";
+import Link from 'next/link';
+import { db } from '@/lib/db';
+import { ensureDbInitialized } from '@/lib/db-init';
+import { JobCard } from '@/components/ui/JobCard';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { JOB_CATEGORIES, JOB_TYPES } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
+
+type JobsFilters = {
+    search?: string;
+    location?: string;
+    category?: string;
+    type?: string;
+};
+
+type JobListEntry = {
+    id: string;
+    title: string;
+    company: string;
+    location: string;
+    category: string;
+    type: string;
+    description: string;
+    salary?: string | null;
+};
+
+function buildJobsUrl(filters: JobsFilters, updates: Partial<JobsFilters>) {
+    const params = new URLSearchParams();
+    const nextFilters = { ...filters, ...updates };
+
+    if (nextFilters.search) params.set('search', nextFilters.search);
+    if (nextFilters.location) params.set('location', nextFilters.location);
+    if (nextFilters.category) params.set('category', nextFilters.category);
+    if (nextFilters.type) params.set('type', nextFilters.type);
+
+    const query = params.toString();
+    return query ? `/jobs?${query}` : '/jobs';
+}
 
 export default async function JobsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const sParams = await searchParams;
-    const search = typeof sParams.search === "string" ? sParams.search : undefined;
-    const location = typeof sParams.location === "string" ? sParams.location : undefined;
-    const category = typeof sParams.category === "string" ? sParams.category : undefined;
-    const type = typeof sParams.type === "string" ? sParams.type : undefined;
+    const filters: JobsFilters = {
+        search: typeof sParams.search === 'string' ? sParams.search.trim() : undefined,
+        location: typeof sParams.location === 'string' ? sParams.location.trim() : undefined,
+        category: typeof sParams.category === 'string' ? sParams.category.trim() : undefined,
+        type: typeof sParams.type === 'string' ? sParams.type.trim() : undefined,
+    };
 
-    const where: any = {};
-    if (search) where.title = { contains: search };
-    if (location) where.location = { contains: location };
-    if (category) where.category = category;
-    if (type) where.type = type;
-
-    let jobs: any[] = [];
-    try {
-        jobs = await db.job.findMany({
-            where,
-            orderBy: { createdAt: "desc" },
-        });
-    } catch (e) {
-        console.warn("Prisma error during static collection:", e);
+    const where: Record<string, unknown> = {};
+    if (filters.search) {
+        where.OR = [
+            { title: { contains: filters.search } },
+            { company: { contains: filters.search } },
+            { description: { contains: filters.search } },
+        ];
     }
+    if (filters.location) where.location = { contains: filters.location };
+    if (filters.category) where.category = filters.category;
+    if (filters.type) where.type = filters.type;
+
+    await ensureDbInitialized();
+    const jobs = (await db.job.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+    })) as JobListEntry[];
 
     return (
         <div className="bg-[#F8F8FD] min-h-screen py-10 px-4 md:px-6">
@@ -39,11 +78,14 @@ export default async function JobsPage({
                 </h1>
 
                 <div className="mb-12">
-                    <SearchBar />
+                    <SearchBar
+                        key={`${filters.search ?? ''}:${filters.location ?? ''}`}
+                        defaultSearch={filters.search ?? ''}
+                        defaultLocation={filters.location ?? ''}
+                    />
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Filters Sidebar */}
                     <aside className="w-full lg:w-1/4 flex-shrink-0">
                         <div className="bg-white p-6 rounded-xl border border-border shadow-sm sticky top-24">
                             <h2 className="font-bold text-lg mb-4">Filters</h2>
@@ -51,89 +93,81 @@ export default async function JobsPage({
                             <div className="mb-6">
                                 <h3 className="font-semibold text-sm mb-3 text-muted">Category</h3>
                                 <div className="space-y-2">
-                                    {["Design", "Sales", "Marketing", "Finance", "Technology", "Engineering", "Business", "Human Resource"].map((cat) => (
-                                        <label key={cat} className="flex items-center gap-2 cursor-pointer transition-colors hover:text-primary">
-                                            <input
-                                                type="radio"
-                                                name="category"
-                                                className="rounded text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-                                                defaultChecked={category === cat}
-                                                // Requires a form submittal or client component for interactivity. For simplicity, we just style it.
-                                                onChange={() => {
-                                                    if (typeof window !== "undefined") {
-                                                        const url = new URL(window.location.href);
-                                                        url.searchParams.set("category", cat);
-                                                        window.location.href = url.toString();
-                                                    }
-                                                }}
-                                            />
-                                            <span className="text-sm">{cat}</span>
-                                        </label>
+                                    <Link
+                                        href={buildJobsUrl(filters, { category: undefined })}
+                                        className={cn(
+                                            'block text-sm rounded-md px-2 py-1 hover:bg-primary/5',
+                                            !filters.category && 'text-primary font-semibold'
+                                        )}
+                                    >
+                                        All categories
+                                    </Link>
+                                    {JOB_CATEGORIES.map((category) => (
+                                        <Link
+                                            key={category}
+                                            href={buildJobsUrl(filters, { category })}
+                                            className={cn(
+                                                'block text-sm rounded-md px-2 py-1 hover:bg-primary/5',
+                                                filters.category === category && 'text-primary font-semibold bg-primary/5'
+                                            )}
+                                        >
+                                            {category}
+                                        </Link>
                                     ))}
-                                    <a href="/jobs" className="text-sm text-primary hover:underline mt-2 inline-block">Clear Categories</a>
                                 </div>
                             </div>
 
                             <div>
                                 <h3 className="font-semibold text-sm mb-3 text-muted">Job Type</h3>
                                 <div className="space-y-2">
-                                    {["Full Time", "Part Time", "Contract", "Freelance"].map((t) => (
-                                        <label key={t} className="flex items-center gap-2 cursor-pointer transition-colors hover:text-primary">
-                                            <input
-                                                type="radio"
-                                                name="type"
-                                                className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-                                                defaultChecked={type === t}
-                                                onChange={() => {
-                                                    if (typeof window !== "undefined") {
-                                                        const url = new URL(window.location.href);
-                                                        url.searchParams.set("type", t);
-                                                        window.location.href = url.toString();
-                                                    }
-                                                }}
-                                            />
-                                            <span className="text-sm">{t}</span>
-                                        </label>
+                                    <Link
+                                        href={buildJobsUrl(filters, { type: undefined })}
+                                        className={cn(
+                                            'block text-sm rounded-md px-2 py-1 hover:bg-primary/5',
+                                            !filters.type && 'text-primary font-semibold'
+                                        )}
+                                    >
+                                        All types
+                                    </Link>
+                                    {JOB_TYPES.map((type) => (
+                                        <Link
+                                            key={type}
+                                            href={buildJobsUrl(filters, { type })}
+                                            className={cn(
+                                                'block text-sm rounded-md px-2 py-1 hover:bg-primary/5',
+                                                filters.type === type && 'text-primary font-semibold bg-primary/5'
+                                            )}
+                                        >
+                                            {type}
+                                        </Link>
                                     ))}
-                                    <a href={(typeof window !== "undefined") ? (() => {
-                                        const u = new URL(window.location.href);
-                                        u.searchParams.delete("type");
-                                        return u.toString()
-                                    })() : "/jobs"} className="text-sm text-primary hover:underline mt-2 inline-block">Clear Types</a>
                                 </div>
                             </div>
                         </div>
                     </aside>
 
-                    {/* Job Listings Grid */}
                     <div className="flex-1">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">
-                                All Jobs <span className="text-muted font-normal text-base ml-2">Showing {jobs.length} results</span>
+                                All Jobs{' '}
+                                <span className="text-muted font-normal text-base ml-2">
+                                    Showing {jobs.length} results
+                                </span>
                             </h2>
                         </div>
 
                         {jobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {jobs.map((job: any) => (
+                                {jobs.map((job) => (
                                     <JobCard key={job.id} job={job} />
                                 ))}
                             </div>
                         ) : (
                             <div className="bg-white border border-border rounded-xl p-12 text-center shadow-sm">
                                 <p className="text-muted mb-4">No jobs found matching your criteria.</p>
-                                <a href="/jobs" className="text-primary font-bold hover:underline">Clear all filters</a>
-                            </div>
-                        )}
-
-                        {/* Pagination Placeholder */}
-                        {jobs.length > 0 && (
-                            <div className="flex justify-center mt-12 gap-2">
-                                <button className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:bg-gray-50 transition-colors pointer-events-none opacity-50">&lt;</button>
-                                <button className="w-10 h-10 rounded-md bg-primary text-white flex items-center justify-center">1</button>
-                                <button className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:bg-gray-50 transition-colors">2</button>
-                                <button className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:bg-gray-50 transition-colors">3</button>
-                                <button className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:bg-gray-50 transition-colors">&gt;</button>
+                                <Link href="/jobs" className="text-primary font-bold hover:underline">
+                                    Clear all filters
+                                </Link>
                             </div>
                         )}
                     </div>

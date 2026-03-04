@@ -4,19 +4,55 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { deleteJob, createJob } from "@/lib/api/jobs";
+import { ApiError, createJob, deleteJob } from "@/lib/api/jobs";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2, Users, ExternalLink, Plus, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { JOB_CATEGORIES, JOB_TYPES } from "@/lib/constants";
 
-export function AdminDashboard({ initialJobs }: { initialJobs: any[] }) {
+type AdminApplication = {
+    id: string;
+    name: string;
+    email: string;
+    resumeLink: string;
+    coverNote: string;
+    createdAt: string | Date;
+};
+
+type AdminJob = {
+    id: string;
+    title: string;
+    company: string;
+    createdAt: string | Date;
+    applications: AdminApplication[];
+};
+
+type NewJobForm = {
+    title: string;
+    company: string;
+    location: string;
+    category: (typeof JOB_CATEGORIES)[number];
+    type: (typeof JOB_TYPES)[number];
+    description: string;
+    salary: string;
+};
+
+const createDefaultForm = (): NewJobForm => ({
+    title: "",
+    company: "",
+    location: "",
+    category: JOB_CATEGORIES[0] ?? "Engineering",
+    type: JOB_TYPES[0] ?? "Full Time",
+    description: "",
+    salary: "",
+});
+
+export function AdminDashboard({ initialJobs }: { initialJobs: AdminJob[] }) {
     const router = useRouter();
-    const [jobs, setJobs] = useState(initialJobs);
+    const [jobs, setJobs] = useState<AdminJob[]>(initialJobs);
     const [expandedJob, setExpandedJob] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [form, setForm] = useState({
-        title: "", company: "", location: "", category: "Engineering", type: "Full Time", description: "", salary: ""
-    });
+    const [form, setForm] = useState<NewJobForm>(createDefaultForm());
 
     const handleLogout = async () => {
         await fetch("/api/admin/logout", { method: "POST" });
@@ -27,9 +63,10 @@ export function AdminDashboard({ initialJobs }: { initialJobs: any[] }) {
         if (!confirm("Are you sure you want to delete this job and all its applications?")) return;
         try {
             await deleteJob(id);
-            setJobs(jobs.filter(j => j.id !== id));
-        } catch (err) {
-            alert("Failed to delete job");
+            setJobs((prevJobs) => prevJobs.filter((job) => job.id !== id));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Failed to delete job";
+            alert(message);
         }
     };
 
@@ -37,11 +74,17 @@ export function AdminDashboard({ initialJobs }: { initialJobs: any[] }) {
         e.preventDefault();
         try {
             const newJob = await createJob(form);
-            setJobs([{ ...newJob, applications: [] }, ...jobs]);
+            setJobs((prevJobs) => [{ ...newJob, applications: [] }, ...prevJobs]);
             setIsCreating(false);
-            setForm({ title: "", company: "", location: "", category: "Engineering", type: "Full Time", description: "", salary: "" });
-        } catch (err) {
-            alert("Failed to create job. Please check all fields.");
+            setForm(createDefaultForm());
+        } catch (error) {
+            if (error instanceof ApiError && error.fieldErrors) {
+                const firstError = Object.values(error.fieldErrors).flat().find(Boolean);
+                alert(firstError ?? "Failed to create job. Please check all fields.");
+                return;
+            }
+            const message = error instanceof Error ? error.message : "Failed to create job. Please check all fields.";
+            alert(message);
         }
     };
 
@@ -76,17 +119,25 @@ export function AdminDashboard({ initialJobs }: { initialJobs: any[] }) {
                                 <select
                                     className="flex h-11 w-full rounded-md border border-border bg-transparent px-3 py-1 text-sm shadow-sm"
                                     value={form.category}
-                                    onChange={e => setForm({ ...form, category: e.target.value })}
+                                    onChange={e => setForm({ ...form, category: e.target.value as NewJobForm["category"] })}
                                 >
-                                    {["Design", "Sales", "Marketing", "Finance", "Technology", "Engineering", "Business", "Human Resource"].map(c => <option key={c} value={c}>{c}</option>)}
+                                    {JOB_CATEGORIES.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
+                                    ))}
                                 </select>
 
                                 <select
                                     className="flex h-11 w-full rounded-md border border-border bg-transparent px-3 py-1 text-sm shadow-sm"
                                     value={form.type}
-                                    onChange={e => setForm({ ...form, type: e.target.value })}
+                                    onChange={e => setForm({ ...form, type: e.target.value as NewJobForm["type"] })}
                                 >
-                                    {["Full Time", "Part Time", "Contract", "Freelance"].map(c => <option key={c} value={c}>{c}</option>)}
+                                    {JOB_TYPES.map((jobType) => (
+                                        <option key={jobType} value={jobType}>
+                                            {jobType}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <textarea
@@ -147,7 +198,7 @@ export function AdminDashboard({ initialJobs }: { initialJobs: any[] }) {
                                                         <p className="text-sm text-muted">No applications received yet.</p>
                                                     ) : (
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            {job.applications.map((app: any) => (
+                                                            {job.applications.map((app) => (
                                                                 <div key={app.id} className="bg-white p-4 rounded border border-border">
                                                                     <div className="flex justify-between items-start mb-2">
                                                                         <div>

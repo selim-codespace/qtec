@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
-import { MapPin } from "lucide-react";
 
 interface JobListItemProps {
     job: {
@@ -14,32 +12,35 @@ interface JobListItemProps {
 }
 
 export function JobListItem({ job }: JobListItemProps) {
+    const type = job.type || "Full-Time";
+    const isFullTime = /full\s*-?\s*time/i.test(type);
+
     return (
-        <Link href={`/jobs/${job.id}`} className="block">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-border bg-white hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                    <div className="h-12 w-12 rounded bg-gray-100 flex items-center justify-center font-bold text-primary flex-shrink-0">
-                        {job.company.charAt(0)}
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-foreground text-lg hover:text-primary transition-colors">
-                            {job.title}
-                        </h3>
-                        <p className="text-muted text-sm mt-1 flex items-center gap-2">
-                            <span>{job.company}</span>
-                            <span>•</span>
-                            <span className="flex items-center"><MapPin className="w-3 h-3 mr-1" />{job.location}</span>
-                        </p>
-                    </div>
+        <Link href={`/jobs/${job.id}`} className="block bg-white p-4 transition-colors hover:bg-white/90 md:px-10 md:py-6">
+            <div className="flex items-start gap-4 md:gap-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f1f2f7] text-lg font-semibold text-[#25324b] md:h-16 md:w-16 md:text-xl">
+                    {job.company.charAt(0)}
                 </div>
-                <div className="flex items-center gap-3">
-                    <Badge variant={job.type === "Full Time" ? "brand" : "warning"}>
-                        {job.type}
-                    </Badge>
-                    <div className="w-px h-4 bg-border hidden sm:block" />
-                    <Badge variant="outline" className="hidden sm:inline-flex">
-                        {job.category}
-                    </Badge>
+
+                <div className="min-w-0">
+                    <h3 className="text-[20px] font-semibold leading-[1.2] text-[#25324b]">{job.title}</h3>
+                    <p className="mt-1 text-base leading-[1.6] text-[#515b6f]">
+                        {job.company} <span className="mx-1 text-[#a8adb7]">&bull;</span> {job.location}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span
+                            className={`rounded-[80px] px-3 py-1 text-sm font-semibold ${
+                                isFullTime ? "bg-[rgba(86,205,173,0.1)] text-[#56cdad]" : "bg-[rgba(255,101,80,0.1)] text-[#ff6550]"
+                            }`}
+                        >
+                            {type}
+                        </span>
+                        <div className="h-6 w-px bg-border" />
+                        <span className="rounded-[80px] border border-primary px-3 py-1 text-sm font-semibold text-primary">
+                            {job.category}
+                        </span>
+                    </div>
                 </div>
             </div>
         </Link>

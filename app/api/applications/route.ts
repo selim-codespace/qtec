@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { ensureDbInitialized } from '@/lib/db-init';
 import { ApplicationSchema } from '@/lib/validators';
 
 export async function POST(req: Request) {
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
             );
         }
 
+        await ensureDbInitialized();
         // Ensure the job exists
         const job = await db.job.findUnique({
             where: { id: parsedData.data.jobId },

@@ -1,8 +1,9 @@
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap");
 @import "tailwindcss";
 
 :root {
   --background: #F8F8FD;
-  --foreground: #202430;
+  --foreground: #25324B;
   
   --primary: #4640DE;
   --primary-hover: #3d38c6;
@@ -34,14 +35,22 @@
   --color-border: var(--border);
   --color-card: var(--card);
   
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-epilogue);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-family: var(--font-epilogue), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+.font-clash {
+  font-family: "Clash Display", var(--font-heading), var(--font-epilogue), Arial, Helvetica, sans-serif;
+}
+
+.font-brand {
+  font-family: var(--font-brand), var(--font-epilogue), Arial, Helvetica, sans-serif;
 }
 
 /* Custom utility for glassmorphism or custom borders if needed */
@@ -52,4 +61,13 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(70, 64, 222, 0.1), 0 8px 10px -6px rgba(70, 64, 222, 0.1);
   border-color: var(--primary);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

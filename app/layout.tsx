@@ -1,11 +1,21 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Epilogue, Red_Hat_Display, Sora } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-const inter = Inter({
-  variable: '--font-inter',
+const epilogue = Epilogue({
+  variable: '--font-epilogue',
+  subsets: ['latin'],
+});
+
+const sora = Sora({
+  variable: '--font-heading',
+  subsets: ['latin'],
+});
+
+const redHatDisplay = Red_Hat_Display({
+  variable: '--font-brand',
   subsets: ['latin'],
 });
 
@@ -21,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${epilogue.variable} ${sora.variable} ${redHatDisplay.variable} antialiased min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
