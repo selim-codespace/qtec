@@ -14,6 +14,7 @@ Full-stack job board built with Next.js App Router, Tailwind CSS, REST API route
   - Search by keyword
   - Filter by category
   - Filter by location
+  - Filter by posted date (`any`, `24h`, `7d`, `30d`)
   - Sort (`latest`, `oldest`, `title`, `company`)
   - Pagination and page-size controls
   - Responsive layout
@@ -26,9 +27,10 @@ Full-stack job board built with Next.js App Router, Tailwind CSS, REST API route
   - Delete jobs
   - View submitted applications per job
   - Quick stats + local search/sort for faster management
+  - Mobile card layout + desktop table layout
 - UX enhancements:
-  - Loading states for app/jobs/admin views
-  - Pending states for search and admin mutations
+  - Loading skeletons for jobs list, job details, and admin dashboard
+  - Pending states for search, filter apply, and admin mutations
 - REST API:
   - `GET /api/jobs` (supports `search`, `category`, `location`, `type`, `sort`, `page`, `limit`)
   - `GET /api/jobs/{id}`
@@ -99,3 +101,61 @@ npm run db:seed
   - Success: `{ success: true, data, meta? }`
   - Error: `{ success: false, error: { message, fieldErrors? } }`
 - `pgAdmin` is optional. It is only a GUI client; the app works without it.
+
+## Deployment
+You can deploy this app to Netlify, Vercel, Railway, or Render.
+
+### Shared Deployment Notes
+1. Set all required environment variables in your hosting platform:
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `ADMIN_PASSWORD`
+   - Optional: `ADMIN_COOKIE_NAME`, `ADMIN_COOKIE_MAX_AGE`, `NEXT_PUBLIC_APP_NAME`
+2. Make sure your Supabase project allows inbound connections from your deploy platform.
+3. Run schema sync before first production launch (from local machine):
+```bash
+npm exec prisma db push
+```
+4. Optional seed for demo data:
+```bash
+npm run db:seed
+```
+
+### Netlify
+- Config file included: `netlify.toml`
+- Build settings (auto-detected for Next.js) are:
+  - Build command: `next build` (or `npm run build`)
+  - Publish directory: `.next`
+- In Netlify UI set environment variables:
+  - `DATABASE_URL`
+  - `DIRECT_URL`
+  - `ADMIN_PASSWORD`
+  - Optional: `ADMIN_COOKIE_NAME`, `ADMIN_COOKIE_MAX_AGE`, `NEXT_PUBLIC_APP_NAME`
+- Then deploy from your Git repository.
+
+Optional Netlify CLI flow:
+```bash
+npm i -g netlify-cli
+netlify login
+netlify init
+netlify env:import .env
+netlify deploy --build --prod
+```
+
+### Vercel
+- Config file included: `vercel.json`
+- Create a new Vercel project from this repo.
+- Add environment variables in Project Settings > Environment Variables.
+- Deploy.
+
+### Railway
+- Config file included: `railway.toml`
+- Create a new Railway project from this repo.
+- Add environment variables in service settings.
+- Deploy.
+
+### Render
+- Blueprint config included: `render.yaml`
+- Create a new Web Service and connect this repo (or use Blueprint).
+- Add sensitive env values (`DATABASE_URL`, `DIRECT_URL`, `ADMIN_PASSWORD`).
+- Deploy.

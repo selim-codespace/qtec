@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { ensureDbInitialized } from '@/lib/db-init';
 import { JobCard } from '@/components/ui/JobCard';
+import { JobsControls } from '@/components/ui/JobsControls';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { JOB_CATEGORIES, JOB_TYPES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -12,8 +13,6 @@ import {
     getDefaultJobListQuery,
     getJobOrderBy,
     getTotalPages,
-    JOB_PAGE_LIMITS,
-    JOB_SORT_OPTIONS,
     JobListQuery,
     parseJobListQuery,
 } from '@/lib/jobs-query';
@@ -43,6 +42,9 @@ function buildJobsUrl(filters: JobListQuery, updates: Partial<JobListQuery>) {
     if (nextFilters.type) params.set('type', nextFilters.type);
     if (nextFilters.sort !== DEFAULT_QUERY.sort) params.set('sort', nextFilters.sort);
     if (nextFilters.limit !== DEFAULT_QUERY.limit) params.set('limit', String(nextFilters.limit));
+    if (nextFilters.postedWithin !== DEFAULT_QUERY.postedWithin) {
+        params.set('postedWithin', nextFilters.postedWithin);
+    }
     if (nextFilters.page > 1) params.set('page', String(nextFilters.page));
 
     const query = params.toString();
@@ -79,7 +81,8 @@ export default async function JobsPage({
         Boolean(query.category) ||
         Boolean(query.type) ||
         query.sort !== DEFAULT_QUERY.sort ||
-        query.limit !== DEFAULT_QUERY.limit;
+        query.limit !== DEFAULT_QUERY.limit ||
+        query.postedWithin !== DEFAULT_QUERY.postedWithin;
 
     const resultsStart = pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0;
     const resultsEnd = Math.min(pagination.page * pagination.limit, pagination.total);
@@ -170,59 +173,13 @@ export default async function JobsPage({
                                 </p>
                             </div>
 
-                            <form method="get" className="flex flex-col sm:flex-row gap-3">
-                                {query.search && <input type="hidden" name="search" value={query.search} />}
-                                {query.location && <input type="hidden" name="location" value={query.location} />}
-                                {query.category && <input type="hidden" name="category" value={query.category} />}
-                                {query.type && <input type="hidden" name="type" value={query.type} />}
-                                <input type="hidden" name="page" value="1" />
-
-                                <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-                                    Sort
-                                    <select
-                                        name="sort"
-                                        defaultValue={query.sort}
-                                        className="h-11 rounded-md border border-border bg-white px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                                    >
-                                        {JOB_SORT_OPTIONS.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-
-                                <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-                                    Per page
-                                    <select
-                                        name="limit"
-                                        defaultValue={String(query.limit)}
-                                        className="h-11 rounded-md border border-border bg-white px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                                    >
-                                        {JOB_PAGE_LIMITS.map((limit) => (
-                                            <option key={limit} value={limit}>
-                                                {limit}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-
-                                <button
-                                    type="submit"
-                                    className="h-11 rounded-md bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors"
-                                >
-                                    Apply
-                                </button>
-
-                                {hasActiveFilters && (
-                                    <Link
-                                        href="/jobs"
-                                        className="h-11 rounded-md border border-border px-5 text-sm font-semibold text-muted hover:bg-gray-50 transition-colors inline-flex items-center justify-center"
-                                    >
-                                        Reset
-                                    </Link>
-                                )}
-                            </form>
+                            <JobsControls
+                                key={`${query.sort}:${query.limit}:${query.postedWithin}`}
+                                initialSort={query.sort}
+                                initialLimit={query.limit}
+                                initialPostedWithin={query.postedWithin}
+                                hasActiveFilters={hasActiveFilters}
+                            />
                         </div>
 
                         {jobs.length > 0 ? (

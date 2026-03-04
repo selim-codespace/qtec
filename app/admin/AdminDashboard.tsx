@@ -328,7 +328,94 @@ export function AdminDashboard({ initialJobs }: { initialJobs: AdminJob[] }) {
                 </div>
 
                 <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="md:hidden divide-y divide-border">
+                        {visibleJobs.length === 0 ? (
+                            <div className="p-6 text-center text-muted">No jobs found for your current filters.</div>
+                        ) : (
+                            visibleJobs.map((job) => (
+                                <div key={job.id} className="p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h3 className="font-semibold text-foreground">{job.title}</h3>
+                                            <p className="text-sm text-muted mt-1">{job.company}</p>
+                                            <p className="text-xs text-muted mt-1">
+                                                {formatDistanceToNow(new Date(job.createdAt), {
+                                                    addSuffix: true,
+                                                })}
+                                            </p>
+                                        </div>
+                                        <Badge variant="brand">
+                                            <Users className="w-3 h-3 mr-1" /> {job.applications.length}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            type="button"
+                                            onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
+                                        >
+                                            {expandedJob === job.id ? "Hide Applications" : "View Applications"}
+                                        </Button>
+                                        <a
+                                            href={`/jobs/${job.id}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="h-8 rounded-md border border-border px-3 text-xs font-semibold text-muted hover:text-primary inline-flex items-center gap-1"
+                                        >
+                                            <ExternalLink className="w-3 h-3" /> Open
+                                        </a>
+                                        <button
+                                            onClick={() => handleDelete(job.id)}
+                                            disabled={isDeletingJobId === job.id}
+                                            className="h-8 rounded-md border border-border px-3 text-xs font-semibold text-muted hover:text-danger disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                            {isDeletingJobId === job.id ? "Deleting..." : "Delete"}
+                                        </button>
+                                    </div>
+
+                                    {expandedJob === job.id && (
+                                        <div className="mt-4 rounded-lg border border-border bg-[#F8F8FD] p-3">
+                                            <h4 className="font-bold text-xs mb-3">
+                                                Applications for {job.title}
+                                            </h4>
+                                            {job.applications.length === 0 ? (
+                                                <p className="text-xs text-muted">No applications received yet.</p>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {job.applications.map((app) => (
+                                                        <div key={app.id} className="rounded border border-border bg-white p-3">
+                                                            <div className="flex justify-between gap-3">
+                                                                <div>
+                                                                    <p className="font-semibold text-sm">{app.name}</p>
+                                                                    <p className="text-xs text-muted">{app.email}</p>
+                                                                </div>
+                                                                <a
+                                                                    href={app.resumeLink}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="text-xs font-bold text-primary hover:underline"
+                                                                >
+                                                                    Resume
+                                                                </a>
+                                                            </div>
+                                                            <p className="mt-2 text-xs text-foreground bg-gray-50 p-2 rounded line-clamp-3">
+                                                                {app.coverNote}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-border">

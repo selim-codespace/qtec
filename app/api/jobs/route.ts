@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        const { page, limit, sort, search, location, category, type } = parsedQuery.data;
-        const where = buildJobWhere({ search, location, category, type });
+        const { page, limit, sort, search, location, category, type, postedWithin } = parsedQuery.data;
+        const where = buildJobWhere({ search, location, category, type, postedWithin });
 
         await ensureDbInitialized();
         const total = await db.job.count({ where });

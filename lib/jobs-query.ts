@@ -1,31 +1,25 @@
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { JOB_CATEGORIES, JOB_TYPES } from '@/lib/constants';
+import {
+    JOB_PAGE_LIMITS,
+    JOB_POSTED_WITHIN_VALUES,
+    JOB_SORT_VALUES,
+    JobPostedWithin,
+    JobSortValue,
+} from '@/lib/jobs-filter-options';
 
-export const JOB_SORT_VALUES = [
-    'latest',
-    'oldest',
-    'title_asc',
-    'title_desc',
-    'company_asc',
-    'company_desc',
-] as const;
-
-export type JobSortValue = (typeof JOB_SORT_VALUES)[number];
-
-export const JOB_SORT_OPTIONS: ReadonlyArray<{ value: JobSortValue; label: string }> = [
-    { value: 'latest', label: 'Latest first' },
-    { value: 'oldest', label: 'Oldest first' },
-    { value: 'title_asc', label: 'Title (A-Z)' },
-    { value: 'title_desc', label: 'Title (Z-A)' },
-    { value: 'company_asc', label: 'Company (A-Z)' },
-    { value: 'company_desc', label: 'Company (Z-A)' },
-];
-
-export const JOB_PAGE_LIMITS = [6, 9, 12, 24] as const;
+export {
+    JOB_PAGE_LIMITS,
+    JOB_POSTED_WITHIN_OPTIONS,
+    JOB_POSTED_WITHIN_VALUES,
+    JOB_SORT_OPTIONS,
+    JOB_SORT_VALUES,
+} from '@/lib/jobs-filter-options';
 
 const DEFAULT_LIMIT = JOB_PAGE_LIMITS[1];
 const DEFAULT_SORT: JobSortValue = 'latest';
+const DEFAULT_POSTED_WITHIN: JobPostedWithin = 'any';
 
 function toOptionalTrimmedString(maxLength: number) {
     return z.preprocess(
@@ -71,6 +65,17 @@ const JobListQuerySchema = z.object({
         },
         z.enum(JOB_SORT_VALUES).default(DEFAULT_SORT)
     ),
+    postedWithin: z.preprocess(
+        (value) => {
+            if (typeof value !== 'string') {
+                return value;
+            }
+
+            const trimmed = value.trim();
+            return trimmed.length > 0 ? trimmed : undefined;
+        },
+        z.enum(JOB_POSTED_WITHIN_VALUES).default(DEFAULT_POSTED_WITHIN)
+    ),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce
         .number()
@@ -108,7 +113,27 @@ export function parseJobListQuery(input: JobQueryInput) {
     return JobListQuerySchema.safeParse(normalizeInput(input));
 }
 
-export function buildJobWhere(filters: Pick<JobListQuery, 'search' | 'location' | 'category' | 'type'>): Prisma.JobWhereInput {
+function getPostedWithinDate(value: JobPostedWithin) {
+    const now = new Date();
+
+    if (value === '24h') {
+        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    if (value === '7d') {
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+
+    if (value === '30d') {
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    return undefined;
+}
+
+export function buildJobWhere(
+    filters: Pick<JobListQuery, 'search' | 'location' | 'category' | 'type' | 'postedWithin'>
+): Prisma.JobWhereInput {
     const where: Prisma.JobWhereInput = {};
 
     if (filters.search) {
@@ -129,6 +154,11 @@ export function buildJobWhere(filters: Pick<JobListQuery, 'search' | 'location' 
 
     if (filters.type) {
         where.type = filters.type;
+    }
+
+    const postedWithinDate = getPostedWithinDate(filters.postedWithin);
+    if (postedWithinDate) {
+        where.createdAt = { gte: postedWithinDate };
     }
 
     return where;

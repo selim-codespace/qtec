@@ -130,6 +130,7 @@ export async function fetchJobs(filters?: {
     location?: string;
     type?: string;
     sort?: string;
+    postedWithin?: string;
     page?: number;
     limit?: number;
 }) {
@@ -139,6 +140,7 @@ export async function fetchJobs(filters?: {
     if (filters?.location) params.append('location', filters.location);
     if (filters?.type) params.append('type', filters.type);
     if (filters?.sort) params.append('sort', filters.sort);
+    if (filters?.postedWithin) params.append('postedWithin', filters.postedWithin);
     if (filters?.page) params.append('page', String(filters.page));
     if (filters?.limit) params.append('limit', String(filters.limit));
 
