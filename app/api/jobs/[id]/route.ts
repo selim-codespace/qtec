@@ -1,21 +1,25 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ensureDbInitialized } from '@/lib/db-init';
 import { isAdminAuthenticated } from '@/lib/auth';
+import { z } from 'zod';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
+
+const JobIdSchema = z.string().trim().uuid('Invalid job ID');
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
+        const parsedId = JobIdSchema.safeParse(id);
 
-        if (!id?.trim()) {
-            return NextResponse.json({ success: false, error: 'Job ID is required' }, { status: 400 });
+        if (!parsedId.success) {
+            return apiError(parsedId.error.issues[0]?.message ?? 'Invalid job ID', 400);
         }
 
         await ensureDbInitialized();
         const job = await db.job.findUnique({
-            where: { id: id.trim() },
+            where: { id: parsedId.data },
             include: {
                 applications: {
                     orderBy: {
@@ -26,13 +30,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         });
 
         if (!job) {
-            return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
+            return apiError('Job not found', 404);
         }
 
-        return NextResponse.json({ success: true, data: job });
+        return apiSuccess(job);
     } catch (error) {
         console.error('Failed to fetch job:', error);
-        return NextResponse.json({ success: false, error: 'Failed to fetch job' }, { status: 500 });
+        return apiError('Failed to fetch job', 500);
     }
 }
 
@@ -40,29 +44,30 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     try {
         const isAdmin = await isAdminAuthenticated();
         if (!isAdmin) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+            return apiError('Unauthorized', 401);
         }
 
         const { id } = await params;
-        if (!id?.trim()) {
-            return NextResponse.json({ success: false, error: 'Job ID is required' }, { status: 400 });
+        const parsedId = JobIdSchema.safeParse(id);
+        if (!parsedId.success) {
+            return apiError(parsedId.error.issues[0]?.message ?? 'Invalid job ID', 400);
         }
 
         await ensureDbInitialized();
         const existingJob = await db.job.findUnique({
-            where: { id: id.trim() },
+            where: { id: parsedId.data },
         });
         if (!existingJob) {
-            return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
+            return apiError('Job not found', 404);
         }
 
         const job = await db.job.delete({
-            where: { id: id.trim() },
+            where: { id: parsedId.data },
         });
 
-        return NextResponse.json({ success: true, data: job });
+        return apiSuccess(job);
     } catch (error) {
         console.error('Failed to delete job:', error);
-        return NextResponse.json({ success: false, error: 'Failed to delete job' }, { status: 500 });
+        return apiError('Failed to delete job', 500);
     }
 }

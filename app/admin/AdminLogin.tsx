@@ -28,7 +28,11 @@ export function AdminLogin() {
             if (res.ok && data.success) {
                 router.refresh();
             } else {
-                setError(data.error || "Invalid password");
+                const message =
+                    typeof data.error === "string"
+                        ? data.error
+                        : data.error?.message || "Invalid password";
+                setError(message);
             }
         } catch {
             setError("Failed to connect to server");

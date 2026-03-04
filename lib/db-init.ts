@@ -7,7 +7,7 @@ export function ensureDbInitialized() {
         return initPromise;
     }
 
-    initPromise = db.$connect().catch((error) => {
+    initPromise = db.$connect().catch((error: unknown) => {
         initPromise = null;
         throw error;
     });

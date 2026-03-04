@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, MapPin, Search } from "lucide-react";
 
@@ -15,6 +15,7 @@ export function SearchBar({ defaultSearch = "", defaultLocation = "", className 
     const searchParams = useSearchParams();
     const [keyword, setKeyword] = useState(defaultSearch);
     const [location, setLocation] = useState(defaultLocation);
+    const [isPending, startTransition] = useTransition();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +29,13 @@ export function SearchBar({ defaultSearch = "", defaultLocation = "", className 
         if (nextLocation) params.set("location", nextLocation);
         else params.delete("location");
 
+        // Any new search should restart pagination from page 1.
+        params.delete("page");
+
         const query = params.toString();
-        router.push(query ? `/jobs?${query}` : "/jobs");
+        startTransition(() => {
+            router.push(query ? `/jobs?${query}` : "/jobs");
+        });
     };
 
     return (
@@ -67,9 +73,10 @@ export function SearchBar({ defaultSearch = "", defaultLocation = "", className 
 
                 <button
                     type="submit"
-                    className="mt-3 h-14 w-full bg-primary px-7 text-lg font-bold text-white transition-colors hover:bg-primary-hover md:mt-0 md:min-w-[209px] md:w-auto"
+                    disabled={isPending}
+                    className="mt-3 h-14 w-full bg-primary px-7 text-lg font-bold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-80 md:mt-0 md:min-w-[209px] md:w-auto"
                 >
-                    Search my job
+                    {isPending ? "Searching..." : "Search my job"}
                 </button>
             </div>
         </form>

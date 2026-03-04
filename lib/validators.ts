@@ -28,9 +28,13 @@ export const JobSchema = z.object({
 });
 
 export const ApplicationSchema = z.object({
-    jobId: z.string().trim().min(1, 'Job ID is required'),
+    jobId: z.string().trim().uuid('Invalid job ID'),
     name: z.string().trim().min(1, 'Name is required'),
     email: z.string().trim().email('Invalid email address'),
     resumeLink: z.string().trim().url('Invalid resume URL'),
     coverNote: z.string().trim().min(10, 'Cover note must be at least 10 characters'),
+});
+
+export const AdminLoginSchema = z.object({
+    password: z.string().trim().min(1, 'Password is required'),
 });

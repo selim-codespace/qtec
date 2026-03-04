@@ -19,8 +19,10 @@ const redHatDisplay = Red_Hat_Display({
   subsets: ['latin'],
 });
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME?.trim() || 'QuickHire';
+
 export const metadata: Metadata = {
-  title: 'QuickHire | Find your dream job',
+  title: `${appName} | Find your dream job`,
   description: 'Discover more than 5000+ Jobs. Great platform for the job seeker.',
 };
 

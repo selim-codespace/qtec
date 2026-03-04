@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+import { apiSuccess } from '@/lib/api-response';
+import { getServerEnv } from '@/lib/env';
 
 export async function POST() {
-    const response = NextResponse.json({ success: true });
-    response.cookies.delete('admin_token');
+    const env = getServerEnv();
+    const response = apiSuccess({ authenticated: false });
+    response.cookies.delete(env.ADMIN_COOKIE_NAME);
     return response;
 }

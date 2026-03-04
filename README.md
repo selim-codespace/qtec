@@ -14,6 +14,8 @@ Full-stack job board built with Next.js App Router, Tailwind CSS, REST API route
   - Search by keyword
   - Filter by category
   - Filter by location
+  - Sort (`latest`, `oldest`, `title`, `company`)
+  - Pagination and page-size controls
   - Responsive layout
 - Job detail page with:
   - Full job description
@@ -23,8 +25,12 @@ Full-stack job board built with Next.js App Router, Tailwind CSS, REST API route
   - Add jobs
   - Delete jobs
   - View submitted applications per job
+  - Quick stats + local search/sort for faster management
+- UX enhancements:
+  - Loading states for app/jobs/admin views
+  - Pending states for search and admin mutations
 - REST API:
-  - `GET /api/jobs`
+  - `GET /api/jobs` (supports `search`, `category`, `location`, `type`, `sort`, `page`, `limit`)
   - `GET /api/jobs/{id}`
   - `POST /api/jobs` (admin)
   - `DELETE /api/jobs/{id}` (admin)
@@ -62,6 +68,12 @@ Copy-Item .env.example .env
 - Supabase: use the connection string from Project Settings > Database.
 - If using Supabase pooler, also set `DIRECT_URL` to the direct (port 5432) connection for Prisma schema operations.
 - Local PostgreSQL: example `postgresql://postgres:postgres@localhost:5432/qtech?schema=public`
+- Set admin/auth config:
+  - `ADMIN_PASSWORD` (required)
+  - `ADMIN_COOKIE_NAME` (optional, defaults to `admin_token`)
+  - `ADMIN_COOKIE_MAX_AGE` in seconds (optional, defaults to `86400`)
+- Optional UI config:
+  - `NEXT_PUBLIC_APP_NAME` (used in metadata/loading text)
 
 4. Generate Prisma client and push schema:
 ```bash
@@ -83,5 +95,7 @@ npm run db:seed
 
 ## Notes
 - `POST /api/jobs` and `DELETE /api/jobs/{id}` require admin authentication cookie.
-- API responses follow `{ success, data }` for successful calls and `{ success, error }` for failures.
+- API responses follow:
+  - Success: `{ success: true, data, meta? }`
+  - Error: `{ success: false, error: { message, fieldErrors? } }`
 - `pgAdmin` is optional. It is only a GUI client; the app works without it.

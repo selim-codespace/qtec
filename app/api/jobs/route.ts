@@ -1,41 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { ensureDbInitialized } from '@/lib/db-init';
 import { isAdminAuthenticated } from '@/lib/auth';
 import { JobSchema } from '@/lib/validators';
+import { apiError, apiSuccess, apiValidationError } from '@/lib/api-response';
+import {
+    buildJobWhere,
+    buildPaginationMeta,
+    clampPage,
+    getJobOrderBy,
+    getTotalPages,
+    parseJobListQuery,
+} from '@/lib/jobs-query';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
-        const searchParams = req.nextUrl.searchParams;
-        const search = searchParams.get('search')?.trim();
-        const category = searchParams.get('category')?.trim();
-        const location = searchParams.get('location')?.trim();
-        const type = searchParams.get('type')?.trim();
+        const parsedQuery = parseJobListQuery(req.nextUrl.searchParams);
+        if (!parsedQuery.success) {
+            return apiError('Invalid query parameters', 400, {
+                fieldErrors: parsedQuery.error.flatten().fieldErrors,
+            });
+        }
 
-        const where: Record<string, unknown> = {};
-        if (search) {
-            where.OR = [
-                { title: { contains: search } },
-                { company: { contains: search } },
-                { description: { contains: search } },
-            ];
-        }
-        if (category) {
-            where.category = category;
-        }
-        if (location) {
-            where.location = { contains: location };
-        }
-        if (type) {
-            where.type = type;
-        }
+        const { page, limit, sort, search, location, category, type } = parsedQuery.data;
+        const where = buildJobWhere({ search, location, category, type });
 
         await ensureDbInitialized();
+        const total = await db.job.count({ where });
+        const totalPages = getTotalPages(total, limit);
+        const currentPage = clampPage(page, totalPages);
+
         const jobs = await db.job.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
+            orderBy: getJobOrderBy(sort),
+            skip: (currentPage - 1) * limit,
+            take: limit,
             include: {
                 _count: {
                     select: { applications: true },
@@ -43,10 +44,12 @@ export async function GET(req: NextRequest) {
             },
         });
 
-        return NextResponse.json({ success: true, data: jobs });
+        return apiSuccess(jobs, {
+            meta: buildPaginationMeta(total, currentPage, limit),
+        });
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
-        return NextResponse.json({ success: false, error: 'Failed to fetch jobs' }, { status: 500 });
+        return apiError('Failed to fetch jobs', 500);
     }
 }
 
@@ -54,17 +57,14 @@ export async function POST(req: NextRequest) {
     try {
         const isAdmin = await isAdminAuthenticated();
         if (!isAdmin) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+            return apiError('Unauthorized', 401);
         }
 
         const body = await req.json();
         const parsedData = JobSchema.safeParse(body);
 
         if (!parsedData.success) {
-            return NextResponse.json(
-                { success: false, error: parsedData.error.flatten().fieldErrors },
-                { status: 400 }
-            );
+            return apiValidationError(parsedData.error);
         }
 
         await ensureDbInitialized();
@@ -72,9 +72,9 @@ export async function POST(req: NextRequest) {
             data: parsedData.data,
         });
 
-        return NextResponse.json({ success: true, data: job }, { status: 201 });
+        return apiSuccess(job, { status: 201 });
     } catch (error) {
         console.error('Failed to create job:', error);
-        return NextResponse.json({ success: false, error: 'Failed to create job' }, { status: 500 });
+        return apiError('Failed to create job', 500);
     }
 }

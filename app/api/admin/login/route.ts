@@ -1,30 +1,30 @@
-import { NextResponse } from 'next/server';
+import { AdminLoginSchema } from '@/lib/validators';
+import { apiError, apiSuccess, apiValidationError } from '@/lib/api-response';
+import { getServerEnv } from '@/lib/env';
 
 export async function POST(req: Request) {
     try {
-        const { password } = await req.json();
-        const adminPassword = process.env.ADMIN_PASSWORD;
-
-        if (!adminPassword) {
-            return NextResponse.json(
-                { success: false, error: 'ADMIN_PASSWORD is not configured' },
-                { status: 500 }
-            );
+        const body = await req.json();
+        const parsedData = AdminLoginSchema.safeParse(body);
+        if (!parsedData.success) {
+            return apiValidationError(parsedData.error);
         }
 
-        if (password === adminPassword) {
-            const response = NextResponse.json({ success: true });
-            response.cookies.set('admin_token', 'authenticated', {
+        const env = getServerEnv();
+        if (parsedData.data.password === env.ADMIN_PASSWORD) {
+            const response = apiSuccess({ authenticated: true });
+            response.cookies.set(env.ADMIN_COOKIE_NAME, 'authenticated', {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 60 * 60 * 24, // 1 day
+                maxAge: env.ADMIN_COOKIE_MAX_AGE,
             });
             return response;
         }
 
-        return NextResponse.json({ success: false, error: 'Invalid password' }, { status: 401 });
-    } catch {
-        return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+        return apiError('Invalid password', 401);
+    } catch (error) {
+        console.error('Admin login failed:', error);
+        return apiError('Internal Server Error', 500);
     }
 }

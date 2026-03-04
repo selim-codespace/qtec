@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ensureDbInitialized } from '@/lib/db-init';
 import { ApplicationSchema } from '@/lib/validators';
+import { apiError, apiSuccess, apiValidationError } from '@/lib/api-response';
 
 export async function POST(req: Request) {
     try {
@@ -9,10 +9,7 @@ export async function POST(req: Request) {
         const parsedData = ApplicationSchema.safeParse(body);
 
         if (!parsedData.success) {
-            return NextResponse.json(
-                { success: false, error: parsedData.error.flatten().fieldErrors },
-                { status: 400 }
-            );
+            return apiValidationError(parsedData.error);
         }
 
         await ensureDbInitialized();
@@ -22,19 +19,16 @@ export async function POST(req: Request) {
         });
 
         if (!job) {
-            return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
+            return apiError('Job not found', 404);
         }
 
         const application = await db.application.create({
             data: parsedData.data,
         });
 
-        return NextResponse.json({ success: true, data: application }, { status: 201 });
+        return apiSuccess(application, { status: 201 });
     } catch (error) {
         console.error('Failed to submit application:', error);
-        return NextResponse.json(
-            { success: false, error: 'Failed to submit application' },
-            { status: 500 }
-        );
+        return apiError('Failed to submit application', 500);
     }
 }
