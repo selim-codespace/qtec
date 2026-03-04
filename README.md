@@ -60,6 +60,7 @@ Copy-Item .env.example .env
 
 3. Configure your PostgreSQL `DATABASE_URL` in `.env`:
 - Supabase: use the connection string from Project Settings > Database.
+- If using Supabase pooler, also set `DIRECT_URL` to the direct (port 5432) connection for Prisma schema operations.
 - Local PostgreSQL: example `postgresql://postgres:postgres@localhost:5432/qtech?schema=public`
 
 4. Generate Prisma client and push schema:

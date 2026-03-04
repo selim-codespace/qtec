@@ -12,9 +12,9 @@ function LogoMark() {
 
 export default function Footer() {
     return (
-        <footer className="bg-[#202430] py-10 text-white md:py-16">
-            <div className="mx-auto max-w-[1192px] px-4 md:px-6 xl:px-0">
-                <div className="space-y-10 md:space-y-12">
+        <footer className="w-full bg-[#202430] py-10 text-white md:py-16">
+            <div className="max-w-[1620px] mx-auto px-4 md:px-6 xl:px-0">
+                <div className="space-y-10 md:space-y-12 flex flex-wrap gap-10 items-start justify-between">
                     <div>
                         <Link href="/" className="mb-6 inline-flex items-center gap-2">
                             <LogoMark />

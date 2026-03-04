@@ -1,0 +1,16 @@
+
+> qtech@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 4173
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://127.0.0.1:4173
+- Network:       http://127.0.0.1:4173
+- Environments: .env
+
+✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\Mohammad Selim\\projects\\personal\\TAAAASKS\\qtec',
+  testMode: true
+}
+✓ Ready in 813ms
+ GET / 200 in 3.6s (compile: 646ms, render: 3.0s)
