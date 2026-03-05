@@ -54,7 +54,7 @@ export function AdminLogin() {
                         <Input
                             type="password"
                             placeholder="Password"
-                            value={"admin_qtech" || password}
+                            value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
