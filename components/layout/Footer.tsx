@@ -53,7 +53,7 @@ export default function Footer() {
                         <p className="mb-4 max-w-[306px] text-base leading-[1.6] text-[#d6ddeb] md:mb-6">
                             The latest job news, articles, sent to your inbox weekly.
                         </p>
-                        <form className="flex max-w-[460px] flex-col gap-2 md:flex-row md:items-center">
+                        <form className="flex max-w-[460px] flex-col gap-0 md:flex-row md:items-center">
                             <input
                                 type="email"
                                 placeholder="Email Address"
@@ -61,7 +61,7 @@ export default function Footer() {
                             />
                             <button
                                 type="button"
-                                className="inline-flex h-12 w-fit items-center justify-center bg-primary px-9 text-base font-bold text-white transition-colors hover:bg-primary-hover"
+                                className="inline-flex h-14 w-fit items-center justify-center bg-primary px-9 text-base font-bold text-white transition-colors hover:bg-primary-hover"
                             >
                                 Subscribe
                             </button>
